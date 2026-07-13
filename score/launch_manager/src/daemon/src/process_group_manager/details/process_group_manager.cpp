@@ -151,6 +151,14 @@ inline bool ProcessGroupManager::initializeControlClientHandler()
                 dup2(fd, osal::IpcCommsSync::control_client_handler_nudge_fd);  // always make sure we are using fd=4
             close(fd);
 
+            // dup2 clears the O_CLOEXEC flag so this needs to be set again
+            if (fcntl(fd2, F_SETFD, FD_CLOEXEC) != 0)
+            {
+                ::close(fd2);
+                return false;
+            }
+
+
             if (osal::IpcCommsSync::control_client_handler_nudge_fd == fd2)
             {
                 void* buf = mmap(NULL, sizeof(osal::Semaphore), PROT_WRITE, MAP_SHARED, fd2, 0);
