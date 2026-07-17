@@ -34,10 +34,6 @@ def setup(request: pytest.FixtureRequest, target: Target):
     res, _ = target.execute(f"mkdir -p {extract_dir}")
     assert res != 1, f"Couldn't create directory {extract_dir}"
 
-    if environ.get("GITHUB_ACTIONS", None) == "true":
-        with Path("/proc/sys/kernal/core_pattern").open('w') as f:
-            f.write("/tmp/tests/core.%p")
-
     target.upload(
         bin_path.resolve(), remote_tar
     )  # Need to resolve for https://github.com/eclipse-score/itf/pull/71
@@ -71,6 +67,10 @@ def download_core_dumps(target: Target, remote_test_dir: Path, test_output_dir: 
     if res != 0:
         logger.error("Find command errored")
         return
+
+    res, stdout = target.execute(f"coredumpctl list")
+    logger.error(res)
+    logger.error(stdout)
 
     core_files = stdout.decode().strip().splitlines()
     for remote_path in core_files:
